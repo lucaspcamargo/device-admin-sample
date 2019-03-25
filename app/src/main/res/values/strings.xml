@@ -18,6 +18,14 @@
     <string name="header_expiration">Password expiration</string>
     <string name="header_lock_wipe">Lock screen / Wipe</string>
     <string name="header_encryption">Encryption</string>
+    <string name="header_kiosk">Kiosk Mode</string>
+
+    <string name="kiosk_features">Kiosk Features</string>
+    <string name="kiosk_fullscreen">Fullscreen Mode</string>
+    <string name="kiosk_hide_navigation">Hide Navigation</string>
+    <string name="kiosk_hide_systemui">Hide SystemUI</string>
+
+
 
     <string name="enable_admin">Enable admin</string>
     <string name="device_capabilities_category">Device capabilities</string>

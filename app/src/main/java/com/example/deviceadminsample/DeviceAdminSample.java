@@ -37,8 +37,10 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceScreen;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 
 import java.util.List;
@@ -136,6 +138,7 @@ public class DeviceAdminSample extends PreferenceActivity {
     @Override
     protected boolean isValidFragment(String fragmentName) {
         return GeneralFragment.class.getName().equals(fragmentName)
+                || KioskFragment.class.getName().equals(fragmentName)
                 || QualityFragment.class.getName().equals(fragmentName)
                 || ExpirationFragment.class.getName().equals(fragmentName)
                 || LockWipeFragment.class.getName().equals(fragmentName)
@@ -471,6 +474,77 @@ public class DeviceAdminSample extends PreferenceActivity {
             mDisableKeyguardTrustAgentCheckbox.setEnabled(enabled);
             mTrustAgentComponent.setEnabled(enabled);
             mTrustAgentFeatures.setEnabled(enabled);
+        }
+    }
+
+    public static class KioskFragment extends AdminSampleFragment
+            implements OnPreferenceChangeListener {
+
+        // UI ELEMS
+        private PreferenceCategory mKioskCategory;
+        private CheckBoxPreference mFullscreenCheckbox;
+        private CheckBoxPreference mHideNavCheckbox;
+        private CheckBoxPreference mHideSystemUICheckbox;
+
+        @Override
+        public void onCreate(@Nullable Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            addPreferencesFromResource(R.xml.device_admin_kiosk);
+
+            mKioskCategory = (PreferenceCategory) findPreference( "key_category_kiosk" );
+
+            mFullscreenCheckbox = (CheckBoxPreference) findPreference("key_kiosk_fullscreen");
+            mHideNavCheckbox = (CheckBoxPreference) findPreference("key_kiosk_hide_navigation");
+            mHideSystemUICheckbox = (CheckBoxPreference) findPreference("key_kiosk_hide_systemui");
+
+            mFullscreenCheckbox.setOnPreferenceChangeListener(this);
+            mHideNavCheckbox.setOnPreferenceChangeListener(this);
+            mHideSystemUICheckbox.setOnPreferenceChangeListener(this);
+
+            mKioskCategory.setEnabled(mAdminActive);
+        }
+
+        @Override
+        public void onResume() {
+            super.onResume();
+            mKioskCategory.setEnabled(mAdminActive);
+        }
+
+        @Override
+        public boolean onPreferenceChange(Preference preference, Object newValue) {
+            if(super.onPreferenceChange(preference, newValue))
+                return true;
+
+            if(preference == mFullscreenCheckbox)
+            {
+                Boolean v = (Boolean) newValue;
+                if(v)
+                {
+                    if(!mDPM.isDeviceOwnerApp( mActivity.getApplicationContext().getPackageName() ))
+                    {
+                        Toast.makeText(mActivity.getApplicationContext(), "Cannot lock task: not device owner!", Toast.LENGTH_SHORT).show();
+                        return false;
+                    }
+
+                    int flags = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+                    mActivity.getWindow().getDecorView().setSystemUiVisibility(flags);
+
+                    String[] allowedPkgs = new String[]{mActivity.getApplicationContext().getPackageName()};
+                    mDPM.setLockTaskPackages(mDeviceAdminSample, allowedPkgs);
+                    mActivity.startLockTask();
+                }
+                else
+                    mActivity.stopLockTask();
+
+                return true;
+            }
+
+            return true;
         }
     }
 
@@ -1108,6 +1182,16 @@ public class DeviceAdminSample extends PreferenceActivity {
                     R.string.expiration_status_past : R.string.expiration_status_future);
             showToast(context, message);
             Log.v(TAG, message);
+        }
+
+        @Override
+        public void onLockTaskModeEntering(Context context, Intent intent, String pkg) {
+            showToast( context, "Agora entrando no modo quiosque :)" );
+        }
+
+        @Override
+        public void onLockTaskModeExiting(Context context, Intent intent) {
+            showToast( context, "Agora saindo do modo quiosque :(" );
         }
     }
 }

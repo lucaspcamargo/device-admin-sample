@@ -23,6 +23,10 @@
         android:title="@string/header_general" />
 
     <header
+        android:fragment="com.example.deviceadminsample.DeviceAdminSample$KioskFragment"
+        android:title="@string/header_kiosk" />
+
+    <header
         android:fragment="com.example.deviceadminsample.DeviceAdminSample$QualityFragment"
         android:title="@string/header_quality" />
 
